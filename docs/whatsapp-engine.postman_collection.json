@@ -1,0 +1,51 @@
+{
+  "info": {
+    "name": "WhatsApp Communication Engine",
+    "_postman_id": "12345-abcde-67890",
+    "description": "API Collection for WhatsApp Communication Engine built with Node.js, Puppeteer, and Redis Queue.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Login (Generate Session)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "http://localhost:3000/api/login" }
+      }
+    },
+    {
+      "name": "Get QR",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "http://localhost:3000/api/qr/{{sessionId}}" }
+      }
+    },
+    {
+      "name": "Check Session Status",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "http://localhost:3000/api/status/{{sessionId}}" }
+      }
+    },
+    {
+      "name": "Send Message (Queue)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"to\": \"91xxxxxxxxxx\",\n  \"message\": \"Hello from WhatsApp Engine 🚀\"\n}"
+        },
+        "url": { "raw": "http://localhost:3000/api/send-message" }
+      }
+    },
+    {
+      "name": "Logout Session",
+      "request": {
+        "method": "POST",
+        "url": { "raw": "http://localhost:3000/api/logout/{{sessionId}}" }
+      }
+    }
+  ]
+}
