@@ -5,11 +5,12 @@ const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
 
-// ✅ Import main routes and services
-const apiRoutes = require('./routes/api');
-const { createWhatsAppClient } = require('./lib/sessionManager');
+const session = require('express-session');
+const loginAuth = require('./middleware/loginAuth');
 
-// ✅ Import Redis Queue and Bull Board (Monitoring UI)
+const apiRoutes = require('./routes/api');
+const { createWhatsAppClient, destroySession } = require('./lib/sessionManager');
+
 const { ExpressAdapter } = require('@bull-board/express');
 const { createBullBoard } = require('@bull-board/api');
 const { BullAdapter } = require('@bull-board/api/bullAdapter');
@@ -18,7 +19,14 @@ const messageQueue = require('./lib/queue');
 const app = express();
 app.use(express.json());
 
-// ✅ Bull Dashboard Setup
+app.use(session({
+  secret: 'whatsapp-engine-secret',
+  resave: false,
+  saveUninitialized: true,
+}));
+
+app.use(express.static(path.join(__dirname, 'public')));
+
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath('/queue');
 
@@ -27,22 +35,39 @@ createBullBoard({
   serverAdapter,
 });
 
-// ✅ Environment variables
 const PORT = process.env.PORT || 3000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/whatsapp-engine-db';
 
-// ----------------------------------
-// ✅ MongoDB Connection
-// ----------------------------------
 mongoose
   .connect(MONGO_URI)
   .then(() => console.log('✅ MongoDB connected successfully'))
   .catch((err) => console.error('❌ MongoDB connection error:', err));
 
-// ----------------------------------
-// ✅ Root Landing Page
-// ----------------------------------
-app.get('/', (req, res) => {
+  // ===== LOGIN ROUTES (ADDED) =====
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/login.html'));
+});
+
+app.post('/login', (req, res) => {
+  const { user, pass } = req.body;
+
+  if (user === 'admin' && pass === 'admin') {
+    req.session.isLoggedIn = true;
+    return res.sendStatus(200);
+  }
+
+  res.sendStatus(401);
+});
+
+app.get('/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.redirect('/login');
+  });
+});
+// ===== END LOGIN ROUTES =====
+
+
+app.get('/', loginAuth, (req, res) => {
   res.send(`
     <html>
       <head>
@@ -89,19 +114,12 @@ app.get('/', (req, res) => {
   `);
 });
 
-// ----------------------------------
-// ✅ Attach API Routes and Queue Dashboard
-// ----------------------------------
 app.use('/api', apiRoutes);
 app.use('/queue', serverAdapter.getRouter());
 
-// ----------------------------------
-// ✅ QR Page (Permanent Session Login)
-// ----------------------------------
-app.get('/generate-qr', async (req, res) => {
-  const sessionId = 'main-session'; // Fixed session ID for single-user setup
+app.get('/generate-qr', loginAuth, async (req, res) => {
+  const sessionId = 'main-session';
   await createWhatsAppClient(sessionId);
-
   res.send(`
     <html>
       <head>
@@ -180,25 +198,51 @@ app.get('/generate-qr', async (req, res) => {
   `);
 });
 
-// ----------------------------------
-// ✅ Restore Session on Server Restart
-// ----------------------------------
-(async () => {
-  const authPath = path.join(__dirname, '../data/.wwebjs_auth');
-  const mainSession = 'session-main-session';
 
-  if (fs.existsSync(`${authPath}/${mainSession}`)) {
-    console.log(`♻️ Restoring main session: ${mainSession}`);
-    await createWhatsAppClient('main-session');
-  } else {
-    console.log('⚠️ No saved session found. Please generate QR and log in once.');
+//RESTORE LOGIC
+(async () => {
+  try {
+    const authPath = path.join(__dirname, '../data/.wwebjs_auth');
+    const folder = path.join(authPath, 'session-main-session');
+    const flag = path.join(folder, 'delete.flag');
+
+    // Delete folder if it was marked for deletion (manual/mobile logout)
+    if (fs.existsSync(flag)) {
+      console.log("🧹 Deleting logout-marked session folder...");
+      try {
+        fs.rmSync(folder, { recursive: true, force: true });
+      } catch (e) {
+        console.log("⚠️ Failed to delete:", e.message);
+      }
+    }
+
+    // After cleanup -> restore or ask for login
+    if (fs.existsSync(folder)) {
+      console.log(`♻️ Restoring main session: main-session`);
+      await createWhatsAppClient('main-session');
+      console.log("✅ Session restored successfully.");
+    } else {
+      console.log("⚠️ No saved session found. Please generate QR and log in once.");
+    }
+
+  } catch (err) {
+    console.error('❌ Error while restoring session:', err);
   }
 })();
 
-// ----------------------------------
-// ✅ Start Express Server
-// ----------------------------------
-app.listen(PORT, () => {
+// Start server
+const server = app.listen(PORT, () => {
   console.log(`🌐 Server running at: http://localhost:${PORT}`);
   console.log(`📊 Queue dashboard:  http://localhost:${PORT}/queue`);
 });
+
+// Graceful shutdown
+async function shutdown() {
+  console.log('🛑 Shutting down gracefully...');
+  try { await destroySession('main-session'); } catch {}
+  try { await mongoose.disconnect(); } catch {}
+  server.close(() => process.exit(0));
+}
+
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);

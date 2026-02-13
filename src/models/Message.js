@@ -51,15 +51,15 @@ const MessageSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true, // ✅ Automatically adds createdAt and updatedAt fields
+    timestamps: true, // Automatically adds createdAt and updatedAt fields
     versionKey: false,
   }
 );
 
-// ✅ Compound index for faster lookups by session and recency
+// Compound index for faster lookups by session and recency
 MessageSchema.index({ sessionId: 1, createdAt: -1 });
 
-// ✅ Virtual: format message data for API responses
+// Virtual: format message data for API responses
 MessageSchema.virtual('summary').get(function () {
   return {
     id: this._id,

@@ -3,7 +3,7 @@ const Queue = require('bull');
 const { getClient } = require('./sessionManager');
 const Message = require('../models/Message');
 
-// ✅ Create Redis-backed Bull queue for WhatsApp messages
+// Single queue name used across the app
 const messageQueue = new Queue('message-queue', {
   redis: {
     host: process.env.REDIS_HOST || '127.0.0.1',
@@ -11,7 +11,7 @@ const messageQueue = new Queue('message-queue', {
   },
 });
 
-// 🧠 Worker: Process messages one by one
+// Worker
 messageQueue.process(async (job) => {
   const { sessionId, to, message } = job.data;
   console.log(`📩 Processing message for ${to} (Session: ${sessionId})`);
@@ -23,13 +23,10 @@ messageQueue.process(async (job) => {
       throw new Error(`Session ${sessionId} not found or not ready.`);
     }
 
-    // ✅ Format phone number correctly for WhatsApp
     const chatId = to.includes('@c.us') ? to : `${to}@c.us`;
 
-    // ✅ Send message via WhatsApp Web.js
     const sentMsg = await client.sendMessage(chatId, message);
 
-    // ✅ Log success in MongoDB
     await Message.create({
       sessionId,
       to,
@@ -39,11 +36,10 @@ messageQueue.process(async (job) => {
     });
 
     console.log(`✅ Message sent successfully to ${to}`);
-    return { success: true, messageId: sentMsg.id.id };
+    return { success: true, messageId: sentMsg.id?.id || null };
   } catch (error) {
     console.error(`❌ Message send failed for ${to}: ${error.message}`);
 
-    // Log failure in MongoDB
     await Message.create({
       sessionId,
       to,
@@ -53,31 +49,22 @@ messageQueue.process(async (job) => {
       sentAt: new Date(),
     });
 
-    // Throw error to allow Bull retries
     throw error;
   }
 });
 
-// ----------------------------------
-// 🧾 Event Logging for Monitoring
-// ----------------------------------
+// Event logging
 messageQueue.on('completed', (job) => {
   console.log(`🎉 Job ${job.id} completed successfully for ${job.data.to}`);
 });
-
 messageQueue.on('failed', (job, err) => {
   console.error(`⚠️ Job ${job.id} failed for ${job.data.to}: ${err.message}`);
 });
-
 messageQueue.on('waiting', (jobId) => {
   console.log(`⏳ Job ${jobId} is waiting to be processed.`);
 });
-
 messageQueue.on('stalled', (job) => {
   console.warn(`⚠️ Job ${job.id} stalled. Will retry automatically.`);
 });
 
-// ----------------------------------
-// ✅ Export Queue for use in server.js and worker.js
-// ----------------------------------
 module.exports = messageQueue;

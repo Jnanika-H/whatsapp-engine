@@ -5,18 +5,17 @@ const {
   getQR,
   getSessionStatus,
   getClient,
+  destroySession,
 } = require('../lib/sessionManager');
 const Message = require('../models/Message');
 const messageQueue = require('../lib/queue');
 
 const router = express.Router();
 
-// -------------------------------------
-// 🔹 POST /api/login → Initialize WhatsApp Session
-// -------------------------------------
+// POST /api/login
 router.post('/login', async (req, res) => {
   try {
-    const sessionId = 'main-session'; // ✅ Permanent session ID
+    const sessionId = 'main-session';
     await createWhatsAppClient(sessionId);
     res.json({
       sessionId,
@@ -28,9 +27,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// -------------------------------------
-// 🔹 GET /api/qr/:sessionId → Get QR Code
-// -------------------------------------
+// GET /api/qr/:sessionId
 router.get('/qr/:sessionId', async (req, res) => {
   const qr = getQR(req.params.sessionId);
   if (!qr) {
@@ -39,20 +36,16 @@ router.get('/qr/:sessionId', async (req, res) => {
   res.json({ sessionId: req.params.sessionId, qr });
 });
 
-// -------------------------------------
-// 🔹 GET /api/status/:sessionId → Check Session Status
-// -------------------------------------
+// GET /api/status/:sessionId
 router.get('/status/:sessionId', async (req, res) => {
   const status = getSessionStatus(req.params.sessionId);
   res.json({ sessionId: req.params.sessionId, status });
 });
 
-// -------------------------------------
-// 🔹 POST /api/send-message → Queue WhatsApp Message
-// -------------------------------------
+// POST /api/send-message
 router.post('/send-message', async (req, res) => {
   const { to, message } = req.body;
-  const sessionId = 'main-session'; // ✅ Use main session by default
+  const sessionId = 'main-session';
 
   if (!to || !message) {
     return res.status(400).json({ error: 'Both "to" and "message" fields are required.' });
@@ -68,9 +61,7 @@ router.post('/send-message', async (req, res) => {
   }
 });
 
-// -------------------------------------
-// 🔹 GET /api/message-status/:to → Check Message Delivery Status
-// -------------------------------------
+// GET /api/message-status/:to
 router.get('/message-status/:to', async (req, res) => {
   const { to } = req.params;
 
@@ -94,20 +85,12 @@ router.get('/message-status/:to', async (req, res) => {
   }
 });
 
-// -------------------------------------
-// 🔹 POST /api/logout → Logout and Destroy Session
-// -------------------------------------
+// POST /api/logout
 router.post('/logout', async (req, res) => {
   const sessionId = 'main-session';
 
   try {
-    const session = getClient(sessionId);
-
-    if (!session) {
-      return res.status(404).json({ error: 'No active session found to logout.' });
-    }
-
-    await session.destroy();
+    await destroySession(sessionId);
     console.log('🚪 Logged out main session successfully.');
     res.json({ status: 'logged_out', sessionId });
   } catch (error) {

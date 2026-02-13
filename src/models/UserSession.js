@@ -45,21 +45,21 @@ const UserSessionSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true, // ✅ adds createdAt and updatedAt automatically
+    timestamps: true, // adds createdAt and updatedAt automatically
     versionKey: false,
   }
 );
 
-// ✅ Pre-save hook to update timestamp manually (optional safeguard)
+// Pre-save hook to update timestamp manually (optional safeguard)
 UserSessionSchema.pre('save', function (next) {
   this.updatedAt = new Date();
   next();
 });
 
-// ✅ Index for faster queries by sessionId + status
+// Index for faster queries by sessionId + status
 UserSessionSchema.index({ sessionId: 1, status: 1 });
 
-// ✅ Virtual: Human-readable summary
+// Virtual: Human-readable summary
 UserSessionSchema.virtual('summary').get(function () {
   return {
     sessionId: this.sessionId,
