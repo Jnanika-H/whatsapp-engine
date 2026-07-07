@@ -519,3 +519,331 @@ These logs help monitor system health and simplify debugging.
 
 ---
 
+# 📡 REST API Documentation
+
+The engine exposes RESTful APIs that allow external applications to interact with WhatsApp through a simple HTTP interface.
+
+---
+
+## Base URL
+
+```text
+http://localhost:3000
+```
+
+---
+
+# Authentication APIs
+
+## Generate QR Code
+
+Initializes the WhatsApp client and generates a QR code if no valid session exists.
+
+**Endpoint**
+
+```http
+GET /login
+```
+
+**Description**
+
+- Starts WhatsApp authentication
+- Displays QR Code
+- Waits for user authentication
+- Stores authenticated session locally
+
+---
+
+## Session Status
+
+Returns the current authentication status.
+
+**Endpoint**
+
+```http
+GET /api/status
+```
+
+### Success Response
+
+```json
+{
+    "authenticated": true,
+    "status": "ready"
+}
+```
+
+---
+
+## Logout
+
+Destroys the active WhatsApp session.
+
+**Endpoint**
+
+```http
+POST /api/logout
+```
+
+### Success Response
+
+```json
+{
+    "success": true,
+    "message": "Logged out successfully."
+}
+```
+
+---
+
+# Messaging APIs
+
+## Send Message
+
+Queues a WhatsApp message for asynchronous delivery.
+
+**Endpoint**
+
+```http
+POST /api/send
+```
+
+### Request Body
+
+```json
+{
+    "phone": "919876543210",
+    "message": "Hello from WhatsApp Communication Engine!"
+}
+```
+
+### Success Response
+
+```json
+{
+    "success": true,
+    "message": "Message queued successfully."
+}
+```
+
+### Error Response
+
+```json
+{
+    "success": false,
+    "message": "WhatsApp client is not authenticated."
+}
+```
+
+---
+
+# 🔄 Complete Request Flow
+
+The following workflow describes how a message travels through the system.
+
+```text
+Client Application
+        │
+        ▼
+POST /api/send
+        │
+        ▼
+Express Router
+        │
+        ▼
+Request Validation
+        │
+        ▼
+Bull Queue
+        │
+        ▼
+Redis
+        │
+        ▼
+Queue Worker
+        │
+        ▼
+WhatsApp Client
+        │
+        ▼
+WhatsApp Web
+        │
+        ▼
+Recipient
+        │
+        ▼
+MongoDB
+```
+
+---
+
+# 🔐 Authentication Workflow
+
+Authentication is handled using **whatsapp-web.js** with **LocalAuth**.
+
+### First Login
+
+```text
+Start Server
+      │
+      ▼
+Initialize WhatsApp Client
+      │
+      ▼
+Saved Session Exists?
+      │
+ ┌────┴────┐
+ │         │
+No        Yes
+ │         │
+ ▼         ▼
+Generate QR Restore Session
+ │         │
+ ▼         ▼
+User Scans QR
+ │
+ ▼
+Authentication Success
+ │
+ ▼
+Session Saved
+```
+
+---
+
+# 📬 Message Processing Workflow
+
+Message delivery is asynchronous.
+
+```text
+REST API
+   │
+   ▼
+Validate Input
+   │
+   ▼
+Create Queue Job
+   │
+   ▼
+Redis Queue
+   │
+   ▼
+Worker Picks Job
+   │
+   ▼
+WhatsApp Client
+   │
+   ▼
+Message Delivered
+   │
+   ▼
+Save Result to MongoDB
+```
+
+---
+
+# 🧠 Session Management
+
+The session manager is responsible for:
+
+- Initializing the WhatsApp client
+- Restoring saved sessions
+- Generating QR codes
+- Monitoring authentication state
+- Handling reconnections
+- Destroying sessions during logout
+
+The engine stores authentication data locally using **LocalAuth**, eliminating the need for repeated QR scans after every restart.
+
+---
+
+# 📥 Queue Management
+
+The application uses **Bull Queue** with **Redis**.
+
+### Responsibilities
+
+- Queue outgoing messages
+- Prevent request blocking
+- Process messages asynchronously
+- Improve scalability
+- Retry failed jobs (if configured)
+- Separate API handling from message delivery
+
+Queue-based processing ensures that API responses remain fast while message delivery continues in the background.
+
+---
+
+# 🗄 Database Models
+
+## UserSession
+
+Stores information related to authenticated WhatsApp sessions.
+
+Typical fields include:
+
+- Session ID
+- Authentication status
+- Creation timestamp
+- Last active timestamp
+
+---
+
+## Message
+
+Stores metadata for every processed message.
+
+Typical fields include:
+
+- Recipient number
+- Message content
+- Delivery status
+- Queue information
+- Timestamp
+
+These collections provide a historical record of communication and simplify auditing and debugging.
+
+---
+
+# ⚠ Error Handling
+
+The engine includes centralized error handling for common failure scenarios.
+
+Examples include:
+
+- Invalid request payload
+- Missing required fields
+- WhatsApp client not authenticated
+- MongoDB connection failure
+- Redis connection failure
+- Queue processing errors
+- Session initialization failure
+- Internal server errors
+
+Each error returns an appropriate HTTP status code and descriptive response message to assist client applications.
+
+---
+
+# 📈 Scalability
+
+The architecture has been designed with scalability in mind.
+
+Current implementation supports:
+
+- Background message processing
+- Persistent sessions
+- Modular architecture
+- Queue-based communication
+
+Future improvements can include:
+
+- Multiple WhatsApp accounts
+- Horizontal worker scaling
+- Distributed Redis deployment
+- Load balancing
+- Authentication tokens
+- Rate limiting
+- Message scheduling
+- Media message support
+
+---
