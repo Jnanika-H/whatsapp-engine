@@ -847,3 +847,294 @@ Future improvements can include:
 - Media message support
 
 ---
+
+# 🧪 Testing the APIs
+
+The REST APIs can be tested using tools such as:
+
+- Postman
+- Thunder Client (VS Code)
+- cURL
+- Any HTTP client
+
+### Example cURL Request
+
+```bash
+curl -X POST http://localhost:3000/api/send \
+-H "Content-Type: application/json" \
+-d '{
+    "phone":"919876543210",
+    "message":"Hello from WhatsApp Communication Engine!"
+}'
+```
+
+---
+
+# 📸 Application Screenshots
+
+## Login Page
+
+> Add a screenshot of the QR Login page here.
+
+```
+docs/images/login-page.png
+```
+
+---
+
+## QR Authentication
+
+> Add the generated QR Code screenshot.
+
+```
+docs/images/qr-code.png
+```
+
+---
+
+## WhatsApp Ready
+
+> Add a screenshot showing successful authentication.
+
+```
+docs/images/ready.png
+```
+
+---
+
+## API Response
+
+> Add a screenshot of the successful API response.
+
+```
+docs/images/api-response.png
+```
+
+---
+
+## MongoDB
+
+> Add a screenshot of the stored message document.
+
+```
+docs/images/mongodb.png
+```
+
+---
+
+## Bull Queue
+
+> Add a screenshot of Bull Board or queue processing.
+
+```
+docs/images/bull-board.png
+```
+
+---
+
+# 🔒 Security Considerations
+
+The current implementation is intended for development, research, learning, and internal automation.
+
+Recommended improvements for production environments include:
+
+- JWT authentication
+- API key validation
+- HTTPS support
+- Request rate limiting
+- Input validation
+- Role-Based Access Control (RBAC)
+- Secure secret management
+- Logging and monitoring
+- Distributed session storage
+
+---
+
+# 🚀 Future Enhancements
+
+The modular architecture allows several future improvements.
+
+### Messaging
+
+- Send images
+- Send videos
+- Send documents
+- Send voice notes
+- Send location
+- Send contact cards
+
+---
+
+### Scheduling
+
+- Scheduled messages
+- Recurring messages
+- Campaign management
+
+---
+
+### Multi-user Support
+
+- Multiple WhatsApp accounts
+- Organization workspaces
+- User management
+- Permission control
+
+---
+
+### Monitoring
+
+- Dashboard
+- Analytics
+- Message statistics
+- Queue monitoring
+- Delivery reports
+
+---
+
+### Integrations
+
+- CRM Integration
+- ERP Integration
+- Chatbot platforms
+- Webhooks
+- Email notifications
+
+---
+
+### Infrastructure
+
+- Docker support
+- Kubernetes deployment
+- CI/CD pipeline
+- Horizontal scaling
+- Cloud deployment
+
+---
+
+# 📚 Learning Outcomes
+
+This project demonstrates practical knowledge of:
+
+- Backend Development
+- REST API Design
+- Node.js
+- Express.js
+- MongoDB
+- Redis
+- Bull Queue
+- Puppeteer
+- WhatsApp Web Automation
+- Session Management
+- Asynchronous Programming
+- Modular Architecture
+- Error Handling
+- Database Integration
+
+---
+
+# 🤝 Contributing
+
+Contributions are welcome.
+
+To contribute:
+
+1. Fork the repository
+2. Create a feature branch
+
+```bash
+git checkout -b feature/new-feature
+```
+
+3. Commit your changes
+
+```bash
+git commit -m "Add new feature"
+```
+
+4. Push the branch
+
+```bash
+git push origin feature/new-feature
+```
+
+5. Open a Pull Request
+
+---
+
+# 📝 License
+
+This project is licensed under the **MIT License**.
+
+Feel free to use, modify, and extend this project for learning, research, and personal development.
+
+---
+
+# 👩‍💻 Author
+
+**Jnanika H**
+
+- Information Science & Engineering Student
+- Backend Developer
+- DevOps & Cloud Enthusiast
+- Passionate about Scalable Software Systems
+
+### GitHub
+
+https://github.com/Jnanika-H
+
+### LinkedIn
+
+> Add your LinkedIn profile link here.
+
+---
+
+# 🙏 Acknowledgements
+
+This project was built using several outstanding open-source technologies.
+
+Special thanks to the maintainers of:
+
+- Node.js
+- Express.js
+- whatsapp-web.js
+- Puppeteer
+- MongoDB
+- Redis
+- Bull Queue
+
+for providing powerful tools that made this project possible.
+
+---
+
+# ⭐ Support
+
+If you found this project useful,
+
+⭐ Star the repository
+
+🍴 Fork the repository
+
+🛠️ Contribute improvements
+
+Sharing feedback and suggestions is always appreciated.
+
+---
+
+# 📌 Conclusion
+
+The **Plug-and-Play WhatsApp Communication Engine** provides a lightweight, extensible, and developer-friendly solution for integrating WhatsApp messaging into applications without depending on the official WhatsApp Business Cloud API.
+
+By combining **Node.js**, **Express**, **MongoDB**, **Redis**, **Bull Queue**, **Puppeteer**, and **whatsapp-web.js**, the project delivers a modular backend capable of handling authentication, session persistence, asynchronous message processing, and REST-based communication.
+
+The architecture is designed to be easy to understand, simple to extend, and suitable for educational purposes, internal automation, and rapid prototyping. With its queue-driven design and modular structure, the project also provides a strong foundation for future enhancements such as media messaging, scheduled communication, multi-session support, analytics, and cloud deployment.
+
+This project demonstrates practical backend engineering concepts while offering a reusable communication engine that can be integrated into a wide range of applications.
+
+---
+
+<p align="center">
+
+Made with ❤️ using Node.js, Express, MongoDB, Redis, Bull Queue & WhatsApp Web
+
+</p>
