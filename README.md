@@ -224,3 +224,298 @@ The design also enables future enhancements such as scheduled messaging, media s
 12. Return API response.
 
 ---
+
+# 📂 Project Structure
+
+The project follows a modular architecture where each module is responsible for a specific functionality, making the application scalable and easy to maintain.
+
+```text
+whatsapp-engine/
+│
+├── src/
+│   ├── config/
+│   │   └── db.js                 # MongoDB connection
+│   │
+│   ├── lib/
+│   │   ├── queue.js              # Bull queue configuration
+│   │   └── sessionManager.js     # WhatsApp client & session management
+│   │
+│   ├── middleware/
+│   │   └── loginAuth.js          # Authentication middleware
+│   │
+│   ├── models/
+│   │   ├── Message.js            # Message schema
+│   │   └── UserSession.js        # User session schema
+│   │
+│   ├── public/
+│   │   └── login.html            # QR Login Page
+│   │
+│   ├── routes/
+│   │   └── api.js                # REST API endpoints
+│   │
+│   ├── messageQueue.js           # Queue worker
+│   └── server.js                 # Application entry point
+│
+├── .env.example
+├── package.json
+├── package-lock.json
+└── README.md
+```
+
+---
+
+# 🏛 Project Architecture
+
+The application is divided into independent modules.
+
+| Module | Responsibility |
+|---------|----------------|
+| Express Server | Receives API requests |
+| API Routes | Exposes REST endpoints |
+| Session Manager | Initializes WhatsApp client and restores sessions |
+| Bull Queue | Queues outgoing messages |
+| Queue Worker | Processes queued messages |
+| MongoDB Models | Stores messages and session data |
+| Redis | Queue storage |
+| Puppeteer | Controls Chromium for WhatsApp Web |
+| LocalAuth | Persists authenticated sessions |
+
+---
+
+# ⚙ Prerequisites
+
+Before running the project, ensure the following software is installed.
+
+| Software | Version |
+|----------|---------|
+| Node.js | 18+ (Recommended: 20+) |
+| npm | Latest |
+| MongoDB | Running locally or remotely |
+| Redis | Running locally or remotely |
+| Google Chrome | Installed (or Chromium) |
+
+---
+
+# 📦 Installation
+
+## 1️⃣ Clone the Repository
+
+```bash
+git clone https://github.com/<your-username>/whatsapp-engine.git
+```
+
+```bash
+cd whatsapp-engine
+```
+
+---
+
+## 2️⃣ Install Dependencies
+
+```bash
+npm install
+```
+
+This installs all required packages listed in `package.json`.
+
+Major dependencies include:
+
+- express
+- whatsapp-web.js
+- puppeteer
+- mongoose
+- bull
+- redis
+- qrcode
+- dotenv
+- cors
+
+---
+
+## 3️⃣ Configure Environment Variables
+
+Create a `.env` file in the project root.
+
+Example:
+
+```env
+PORT=3000
+
+MONGO_URI=mongodb://localhost:27017/whatsapp-engine
+
+REDIS_HOST=127.0.0.1
+
+REDIS_PORT=6379
+
+SESSION_ID=main-session
+```
+
+> **Note:** Your actual `.env.example` should be kept synchronized with the variables your code uses.
+
+---
+
+# 🍃 MongoDB Configuration
+
+The project uses MongoDB to persist application data.
+
+Stored information includes:
+
+- WhatsApp session metadata
+- Message history
+- Delivery status
+- Queue processing logs
+- Timestamps
+
+Start MongoDB before running the application.
+
+Example:
+
+```bash
+mongod
+```
+
+Verify the database connection before starting the server.
+
+---
+
+# 🔴 Redis Configuration
+
+Redis is used as the backend for Bull Queue.
+
+It stores queued jobs before they are processed by the worker.
+
+Start Redis.
+
+Linux/macOS
+
+```bash
+redis-server
+```
+
+Windows
+
+Start Redis using your installed Redis service or Docker container.
+
+Verify Redis is running.
+
+```bash
+redis-cli ping
+```
+
+Expected output:
+
+```text
+PONG
+```
+
+---
+
+# ▶ Running the Application
+
+Start the server.
+
+```bash
+npm start
+```
+
+or
+
+```bash
+node src/server.js
+```
+
+If using nodemon during development:
+
+```bash
+npm run dev
+```
+
+---
+
+# 🚀 Application Startup
+
+When the server starts, it performs the following steps automatically:
+
+1. Loads environment variables.
+2. Connects to MongoDB.
+3. Connects to Redis.
+4. Initializes Bull Queue.
+5. Creates Express server.
+6. Initializes WhatsApp client.
+7. Restores previous session if available.
+8. Generates QR Code when authentication is required.
+9. Starts listening for API requests.
+
+---
+
+# 📱 First-Time Authentication
+
+When running the application for the first time:
+
+1. Start the server.
+2. Open the login page in your browser.
+3. A QR Code will be displayed.
+4. Open WhatsApp on your mobile device.
+5. Navigate to **Linked Devices**.
+6. Scan the QR Code.
+7. Wait for successful authentication.
+8. The authenticated session is securely stored for future use.
+
+After successful login, the engine restores the saved session automatically on subsequent restarts, eliminating the need to scan the QR Code again unless the user explicitly logs out or the session becomes invalid.
+
+---
+
+# 🔐 Session Persistence
+
+The engine uses **LocalAuth** provided by `whatsapp-web.js`.
+
+This enables:
+
+- Persistent login sessions
+- Automatic session restoration
+- Reduced authentication overhead
+- Seamless reconnection after server restarts
+
+A new QR Code is generated only when:
+
+- No saved session exists.
+- The user logs out.
+- The saved session becomes invalid or expires.
+
+---
+
+# 🌐 Default Server
+
+Once the server starts successfully, it listens on:
+
+```text
+http://localhost:3000
+```
+
+The REST APIs are accessible through this server.
+
+Example:
+
+```text
+POST http://localhost:3000/api/send
+```
+
+---
+
+# 📄 Logging
+
+The application logs important events, including:
+
+- Database connection
+- Redis connection
+- WhatsApp client initialization
+- QR Code generation
+- Authentication success
+- Message queue events
+- Message delivery
+- Errors and exceptions
+
+These logs help monitor system health and simplify debugging.
+
+---
+
